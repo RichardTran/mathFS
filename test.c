@@ -19,7 +19,7 @@ static const char* functions[]={
 	"/factor",	//5
 	"/exp", 	//6
 	"/fib",  	//7
-	};
+};
 static const char* docNames[]={
 	"",    		//0
 	"/add/doc", 	//1
@@ -29,7 +29,7 @@ static const char* docNames[]={
 	"/factor/doc",	//5
 	"/exp/doc", 	//6
 	"/fib/doc",  	//7
-	};
+};
 static const char* documents[]={
 	"", 						//0 empty since we won't be making a doc for root.
 	"Adds two numbers.\n", 				//1
@@ -39,14 +39,14 @@ static const char* documents[]={
 	"Computes the prime factors of a number\n",	//5
 	"Raises a number to a given exponent\n",	//6
 	"Computes the first n fibonacci numbers\n"	//7
-	};
+};
 //Used if valid function to do math
 
 char ** parse(const char * pth){
 	char * path = malloc(sizeof(char)*strlen(pth)+1);
 	path = strcpy(path,pth); //have to copy as path name is given as const
 	char ** ptr = malloc(sizeof(char*)*3); //THIS WAS THE PROBLEM. YOU WERE RIGHT. 
-						//MY BAD. WE HAD TO MALLOC
+	//MY BAD. WE HAD TO MALLOC
 	char c;
 	int counter = 1;
 	int i;
@@ -111,6 +111,92 @@ int getFunction(char** ptr){
 	}
 	return -1; //error
 }//end of getFunction
+int * getFactors(int n){
+	int counter = 2;
+	int * factors = (int *)malloc(sizeof(int)*counter);
+	while(n%2 == 0){
+		counter++;
+		factors = realloc(factors,sizeof(int)* counter);
+		printf("%d\t",2);
+		factors[counter-3] = 2;
+		n = n/2;
+	}
+
+	int i;
+	for(i = 3; i < sqrt(n); i = i+2){
+		while(n % i == 0){
+			counter++;
+			factors = realloc(factors,sizeof(int)*counter);
+			printf("%d\t",i);
+			factors[counter-3] = i;
+			n = n/i;
+		}//end of while 
+	}//end off or 
+
+	if(n > 2){
+		counter++;
+		factors = realloc(factors, sizeof(int)*counter);
+		printf("%d\t\n",n);
+		factors[counter-3] = n;
+	}//end of if 
+
+	return factors;
+}//end of getFactors 
+
+int getFib(int n){
+	if(n==0)
+		return 0;
+	else if(n==1)
+		return 1;
+	else
+		return (getFib(n-1) + getFib(n-2));
+}//end of getFib
+
+char * doMoreMath(int fundex, char * para){
+	char* a = malloc(strlen(para)+1);
+	a = strcpy(a,para);
+	int fpara = atoi(a);
+	int * ret = NULL;
+
+	char * str_ret = (char *)malloc(sizeof(char)*1000);
+
+	if(fundex == 5){
+		printf("we're computing the prime factors for %d\n", fpara);
+		int * factors = getFactors(fpara);
+		ret = factors;
+		int i;
+		char * str_temp = (char *)malloc(sizeof(char)*1000);
+		for(i = 0; i < sizeof(factors)/sizeof(factors[0])+1; i++){
+//		for(i = 0 ; i < 3; i++){
+		    //str_temp = (char *)malloc(sizeof(char)*1000);
+			printf("ret[%d] is %d\n",i,ret[i]);
+			sprintf(str_temp, "%d", ret[i]);
+			str_ret = strcat(str_ret, str_temp);
+			str_ret = strcat(str_ret, "\n");
+			
+		}//end of for
+		str_ret = strcat(str_ret, "\0");
+	}//end of prime factors 
+	else if(fundex == 7){
+		printf("we're getting the first %d fibonacci numbers\n",fpara);
+		int i;
+		int * fibs = (int *)malloc(sizeof(int)*fpara);
+		for(i = 0; i < fpara; i++){
+			fibs[i] = getFib(i);	
+		}//end of for 
+		ret = fibs;
+		char * str_temp = (char *)malloc(sizeof(char)*1000);
+		for(i = 0; i < fpara; i++){
+			printf("ret[%d] is %d\n",i,ret[i]);
+			sprintf(str_temp,"%d",ret[i]);
+			str_ret = strcat(str_ret,str_temp);
+			str_ret = strcat(str_ret, "\n");
+		}//end of for 
+		str_ret = strcat(str_ret, "\0");
+	}//end of fibonacci
+	//return ret;
+	return str_ret;
+}//end of domoremath
 
 double doMath(int fundex, char * para1, char*  para2){
 	char* a = malloc(strlen(para1)+1);
@@ -137,26 +223,18 @@ double doMath(int fundex, char * para1, char*  para2){
 		return ret;
 	}//end of mult
 	else if(fundex == 4){
-	//	if(fpara2 == 0){
-	//		//SHOULD TAKE CARE OF DIVIDE BY ZERO. NOT NECESSARILY HERE
-	//	}
+		//	if(fpara2 == 0){
+		//		//SHOULD TAKE CARE OF DIVIDE BY ZERO. NOT NECESSARILY HERE
+		//	}
 		printf("LINE: %d\n", __LINE__);
 		ret = fpara1 / fpara2;
 		printf("LINE: %d\n", __LINE__);
 		return ret;
 	}//end of div
-	else if(fundex == 5){
-	//	getFactors();
-	}//end of factor
 	else if(fundex == 6){
 		ret = pow(fpara1,fpara2);
 		return ret;
 	}//end of exp
-	else if(fundex == 7){
-
-	}//end of fib
-
-
 	return -1;// temp
 }//end of domath
 
@@ -178,13 +256,13 @@ void freePtr(char** ptr){
 static int test_getattr(const char *path, struct stat *stbuf)
 {
 	int i =0;	
-        int res = 0;
+	int res = 0;
 	char** ptr = parse(path);
 	int choice = getFunction(ptr);
 	double ans;
 	int length;
 	char* myBuffer;// = malloc(sizeof(char)*100);
-        memset(stbuf, 0, sizeof(struct stat));
+	memset(stbuf, 0, sizeof(struct stat));
 	for(i=0;i<8;i++){
 		//path = mountpoint "/"	
 		if (strcmp(path, functions[i]) == 0/* || strcmp(path, "/add/3")==0*/) 
@@ -192,7 +270,7 @@ static int test_getattr(const char *path, struct stat *stbuf)
 			stbuf->st_mode = S_IFDIR | 0755; //0755 = Admin can do all. Rest can read+exec
 			stbuf->st_nlink = 3;
 			return res;
-        	} 
+		} 
 		else if(strcmp(path, docNames[i])==0/* || strcmp(path,"/add/3")*/){
 			//0444 = Read only
 			//Call math functions through here. Example: /add/3/3
@@ -205,17 +283,17 @@ static int test_getattr(const char *path, struct stat *stbuf)
 	printf("THE CHOICE_getattr: %d\n",choice);	
 	printf("THE ptr_getattr: %s\n",ptr[0]);	
 	if(choice!=-1){
-		
+
 		if((((choice>=1 && choice<=4) || choice==6) && isNumber(ptr[1])!=0 && ptr[2]==NULL) || 
-					((choice ==7 || choice == 5) && ptr[1]==NULL && ptr[2]==NULL))
+				((choice ==7 || choice == 5) && ptr[1]==NULL && ptr[2]==NULL))
 		{
 			stbuf->st_mode = S_IFDIR | 0755; //0755 = Admin can do all. Rest can read+exec
 			stbuf->st_nlink = 3;
 			return res;
-        	}
+		}
 		else if((((choice>=1 && choice<=4) || choice==6) && isNumber(ptr[1])!=0 && isNumber(ptr[2])!=0) || 
 				((choice ==7 || choice == 5) && isNumber(ptr[1])!=0 && ptr[2]==NULL)){
-			 
+
 			printf("WE GOT MATH\n");
 			stbuf->st_mode = S_IFREG | 0444;
 			stbuf->st_nlink = 1;
@@ -235,13 +313,15 @@ static int test_getattr(const char *path, struct stat *stbuf)
 			}
 			else if((choice == 5 || choice == 7) && isNumber(ptr[1])!=0 && ptr[2]==NULL){
 				myBuffer = malloc(sizeof(char)*1000);
+				printf("LINE: %d\n", __LINE__);
+				char * ff_ans = doMoreMath(choice, ptr[1]);	
+				myBuffer = strcpy(myBuffer, ff_ans);
+				length = strlen(myBuffer);
+				//length = sprintf(myBuffer, "%s", ff_ans);
+				stbuf->st_size = length;
+
 				//ALEXXXX ZHAAAAAAAAANG
-				//DO SPECIAL FUNCTION FOR CHOICE 5 & 7 TO RETURN ARRAY OF ANSWERS;
-				// TURN INTO ARRAY OF STRINGS, SEPARATED BY \N CHARS AND END WITH \0. USE SPRINTF
-			//	char* fib_fact = doMath2(choice,ptr[1]);
-			//	myBuffer = strcpy(myBuffer, SPECIAL_ARRAY_OF_ANSWERS);
-			//	length = strlen(myBuffer);
-			//	stbuf->st_size = length+1;
+				
 			}
 			else{
 				myBuffer = malloc(sizeof(char)*100);
@@ -253,8 +333,8 @@ static int test_getattr(const char *path, struct stat *stbuf)
 			return res;	
 		}
 	}
-        res = -ENOENT;
-        return res;
+	res = -ENOENT;
+	return res;
 }
 
 // readdir is meant only to display all function directories and their docs to user
@@ -262,11 +342,11 @@ static int test_getattr(const char *path, struct stat *stbuf)
 // filler(buf, fileName, NULL, 0) are just for output for ls. Even we got rid of their filler, files still exist
 // We add +1 to functions[i] to rid the first character, which in many cases is the '/' char.
 static int test_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-                         off_t offset, struct fuse_file_info *fi)
+		off_t offset, struct fuse_file_info *fi)
 {
-        (void) offset;
+	(void) offset;
 	printf("readDir Here\n");
-        (void) fi;
+	(void) fi;
 	int i =0;
 	for(i=1;i<8;i++){
 		if (strcmp(path,functions[i])==0){
@@ -277,27 +357,27 @@ static int test_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		}
 	}
 	if(strcmp(path,"/")==0){
-        	filler(buf, ".", NULL, 0); // if path == "/"
-        	filler(buf, "..", NULL, 0);
+		filler(buf, ".", NULL, 0); // if path == "/"
+		filler(buf, "..", NULL, 0);
 		int i;
 		for(i=1;i<8;i++){
-        		filler(buf, functions[i] + 1, NULL, 0);
+			filler(buf, functions[i] + 1, NULL, 0);
 		}
 		return 0;
 	}
 	char** ptr = parse(path);
 	int choice = getFunction(ptr);
 	if((((choice>=1 && choice<=4) || choice==6) && isNumber(ptr[1])!=0 && ptr[2]==NULL) || 
-				((choice ==7 || choice == 5) && ptr[1]==NULL && ptr[2]==NULL)){
+			((choice ==7 || choice == 5) && ptr[1]==NULL && ptr[2]==NULL)){
 		filler(buf, ".", NULL, 0);
 		filler(buf, "..", NULL, 0);
 		return 0;
 	}
 	//should recursively assign filler "." and ".." in every possible directory
-        else{
-                return -ENOENT;
+	else{
+		return -ENOENT;
 	}
-        return 0;
+	return 0;
 }
 static int test_open(const char *path, struct fuse_file_info *fi)
 {
@@ -306,7 +386,7 @@ static int test_open(const char *path, struct fuse_file_info *fi)
 	int found = 0;
 	for(i=1;i<8;i++){ //meant for docs
 		if (strcmp(path,docNames[i])==0){
-                	found = 1;
+			found = 1;
 			break;
 		}
 	}
@@ -316,28 +396,28 @@ static int test_open(const char *path, struct fuse_file_info *fi)
 	char** ptr = parse(path);
 	int choice = getFunction(ptr);
 	if((((choice>=1 && choice<=4) || choice==6) && isNumber(ptr[1])!=0 && isNumber(ptr[2])!=0) || 
-				((choice ==7 || choice == 5) && isNumber(ptr[1])!=0 && ptr[2]==NULL)){
+			((choice ==7 || choice == 5) && isNumber(ptr[1])!=0 && ptr[2]==NULL)){
 		return 0;
 	}
 	if(getFunction(ptr)==-1){
 		return -ENOENT;
 	}
-        if ((fi->flags & 3) != O_RDONLY){
-                return -EACCES;
+	if ((fi->flags & 3) != O_RDONLY){
+		return -EACCES;
 	}
-        return 0;
+	return 0;
 }
 static int test_read(const char *path, char *buf, size_t size, off_t offset,
-                      struct fuse_file_info *fi)
+		struct fuse_file_info *fi)
 {
 	printf("test_Read\n");
-        size_t len;
-        (void) fi;
+	size_t len;
+	(void) fi;
 	int i = 0;
 	int found = 0;
 	for(i=1;i<8;i++){ //meant for docs
 		if (strcmp(path,docNames[i])==0){
-                	found = 1;
+			found = 1;
 			break;
 		}
 	}
@@ -356,9 +436,9 @@ static int test_read(const char *path, char *buf, size_t size, off_t offset,
 	char** ptr = parse(path);
 	int choice = getFunction(ptr);
 	printf("CHOICE_read: %d\n",choice);
-		printf("LINE: %d\n", __LINE__);
+	printf("LINE: %d\n", __LINE__);
 	printf("ptr_read: %s\n",ptr[0]);
-		printf("LINE: %d\n", __LINE__);
+	printf("LINE: %d\n", __LINE__);
 	if(choice == -1){
 		return -ENOENT;
 	}
@@ -373,15 +453,17 @@ static int test_read(const char *path, char *buf, size_t size, off_t offset,
 		}
 		else if((choice == 5 || choice == 7) && isNumber(ptr[1]) && ptr[2] == NULL){
 			myBuffer = malloc(sizeof(char)*1000);
+			char * ff_ans = doMoreMath(choice, ptr[1]);	
+			printf("ff_ans is %s\n",ff_ans);
+			myBuffer = strcpy(myBuffer,ff_ans);
+			len = strlen(myBuffer);
+			//len = sprintf(myBuffer, "%s", ff_ans);
+			myBuffer[len] = '\0';
+			printf("mybuffer is %s\n",myBuffer);
+			len = len + 1;
+
 			//ALEXXXX ZHAAAAAAAAANG
-			char* fib_fact = doMath2(choice,ptr[1]); // Separate fib and fact into doMath2 
-					//since they're both the same, but different from everything else
-			//DO THE SAME ABOVE, HERE
-			//IN WHICH WE DO FIB/FACTOR RIGHT HERE.
-			//TRY DOING sprintf to a temp, then strcat onto real answer, with \n as well
-			//len = strlen(myBuffer);
-			//myBuffer[len+1] = '\0';
-			//len = len+1;
+			
 		}
 		else{
 			myBuffer = malloc(sizeof(char)*100);
@@ -391,6 +473,7 @@ static int test_read(const char *path, char *buf, size_t size, off_t offset,
 			myBuffer[len+1]='\0';
 			len = len+1;
 		}
+		printf("LINE: %d\n", __LINE__);
 		printf("ANSWER_read: %f\n",ans);
 		if(offset < len){
 			if(offset + size > len)
@@ -400,16 +483,16 @@ static int test_read(const char *path, char *buf, size_t size, off_t offset,
 		} else
 			size = 0;
 		printf("LINE: %d\n", __LINE__);
-        	return size;
+		return size;
 	}
 }
 static struct fuse_operations test_oper = {
-        .getattr        = test_getattr,
-        .readdir        = test_readdir,
-        .open           = test_open,
-        .read           = test_read,
+	.getattr        = test_getattr,
+	.readdir        = test_readdir,
+	.open           = test_open,
+	.read           = test_read,
 };
 int main(int argc, char *argv[])
 {
-        return fuse_main(argc, argv, &test_oper, NULL);
+	return fuse_main(argc, argv, &test_oper, NULL);
 }

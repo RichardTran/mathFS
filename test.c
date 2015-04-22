@@ -177,7 +177,6 @@ void freePtr(char** ptr){
 
 static int test_getattr(const char *path, struct stat *stbuf)
 {
-	printf("getAttr Here\n");
 	int i =0;	
         int res = 0;
 	char** ptr = parse(path);
@@ -190,7 +189,6 @@ static int test_getattr(const char *path, struct stat *stbuf)
 		//path = mountpoint "/"	
 		if (strcmp(path, functions[i]) == 0/* || strcmp(path, "/add/3")==0*/) 
 		{ 		
-			printf("functions: %s\n",functions[i]);
 			stbuf->st_mode = S_IFDIR | 0755; //0755 = Admin can do all. Rest can read+exec
 			stbuf->st_nlink = 3;
 			return res;
@@ -198,7 +196,6 @@ static int test_getattr(const char *path, struct stat *stbuf)
 		else if(strcmp(path, docNames[i])==0/* || strcmp(path,"/add/3")*/){
 			//0444 = Read only
 			//Call math functions through here. Example: /add/3/3
-			printf("functions: %s\n",functions[i]);
 			stbuf->st_mode = S_IFREG | 0444;
 			stbuf->st_nlink = 1;
 			stbuf->st_size = strlen(documents[i]);
@@ -236,19 +233,26 @@ static int test_getattr(const char *path, struct stat *stbuf)
 				printf("LENGTH: %d\n",length);
 				stbuf->st_size = length+1; // we'll dynamically change this later	
 			}
+			else if((choice == 5 || choice == 7) && isNumber(ptr[1])!=0 && ptr[2]==NULL){
+				myBuffer = malloc(sizeof(char)*1000);
+				//ALEXXXX ZHAAAAAAAAANG
+				//DO SPECIAL FUNCTION FOR CHOICE 5 & 7 TO RETURN ARRAY OF ANSWERS;
+				// TURN INTO ARRAY OF STRINGS, SEPARATED BY \N CHARS AND END WITH \0. USE SPRINTF
+			//	char* fib_fact = doMath2(choice,ptr[1]);
+			//	myBuffer = strcpy(myBuffer, SPECIAL_ARRAY_OF_ANSWERS);
+			//	length = strlen(myBuffer);
+			//	stbuf->st_size = length+1;
+			}
 			else{
 				myBuffer = malloc(sizeof(char)*100);
 				ans = doMath(choice,ptr[1],ptr[2]);
 				length = sprintf(myBuffer,"%f",ans);
 				stbuf->st_size = length+1; // we'll dynamically change this later
 			}
-			//myBuffer[length]='\n';
-			//myBuffer[length+1]='\0';
 			free(myBuffer);
 			return res;	
 		}
 	}
-	printf("No entry~~~\n"); //basically turns a filename to be read = No such file or directory
         res = -ENOENT;
         return res;
 }
@@ -348,7 +352,7 @@ static int test_read(const char *path, char *buf, size_t size, off_t offset,
 		return size;
 	}
 	double ans;
-	char* myBuffer;// = malloc(sizeof(char)*100); //answer is allowed only to be 100 characters
+	char* myBuffer;
 	char** ptr = parse(path);
 	int choice = getFunction(ptr);
 	printf("CHOICE_read: %d\n",choice);
@@ -359,15 +363,28 @@ static int test_read(const char *path, char *buf, size_t size, off_t offset,
 		return -ENOENT;
 	}
 	else{
-		myBuffer = malloc(sizeof(char)*100);
 		if(choice == 4 && strcmp(ptr[2],"0")==0){
+			myBuffer = malloc(sizeof(char)*100);
 			myBuffer = strcpy(myBuffer,"Divide by zero error");
 			len = strlen(myBuffer);
 			myBuffer[len] = '\n';
 			myBuffer[len+1] = '\0';
 			len = len+1;
 		}
+		else if((choice == 5 || choice == 7) && isNumber(ptr[1]) && ptr[2] == NULL){
+			myBuffer = malloc(sizeof(char)*1000);
+			//ALEXXXX ZHAAAAAAAAANG
+			char* fib_fact = doMath2(choice,ptr[1]); // Separate fib and fact into doMath2 
+					//since they're both the same, but different from everything else
+			//DO THE SAME ABOVE, HERE
+			//IN WHICH WE DO FIB/FACTOR RIGHT HERE.
+			//TRY DOING sprintf to a temp, then strcat onto real answer, with \n as well
+			//len = strlen(myBuffer);
+			//myBuffer[len+1] = '\0';
+			//len = len+1;
+		}
 		else{
+			myBuffer = malloc(sizeof(char)*100);
 			ans = doMath(choice,ptr[1],ptr[2]);
 			len = sprintf(myBuffer,"%f",ans);
 			myBuffer[len]='\n';
@@ -375,7 +392,6 @@ static int test_read(const char *path, char *buf, size_t size, off_t offset,
 			len = len+1;
 		}
 		printf("ANSWER_read: %f\n",ans);
-		//char* c = "62\n"; //test run
 		if(offset < len){
 			if(offset + size > len)
 				size = len - offset;

@@ -3,11 +3,11 @@
 #include <fuse.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-
 
 // Array indices match functions[]<=>docNames[]<=>documents[] for easy pseudo key->value 
 static const char* functions[]={
@@ -100,11 +100,11 @@ int isNumber(char* numberString){
 int getFunction(char** ptr){
 	int i;
 	for(i = 1; i < 8; i++){
-		if(strcmp(ptr[0], functions[i]) == 0){
-			if( ((i >= 1 && i <= 4) || i==6) && isNumber(ptr[1]) && isNumber(ptr[2]) ){
+		if(strcmp(*ptr, functions[i]) == 0){
+			if( ((i >= 1 && i <= 4) || i==6) ){
 				return i;
 			}
-			else if( (i == 5 || i == 7) && isNumber(ptr[1]) && ptr[2]==NULL){
+			else if( (i == 5 || i == 7)){
 				return i;
 			}
 		}
@@ -125,10 +125,39 @@ double doMath(int fundex, char * para1, char*  para2){
 		printf("we're adding %f and %f!\n", fpara1, fpara2);
 		printf("%s and %s\n", para1, para2);
 		ret = fpara1 + fpara2;
-
+		printf("LINE: %d\n", __LINE__);
+		return ret;
 	}//end of add
+	else if(fundex == 2){
+		ret = fpara1 - fpara2;
+		return ret;
+	}//end of sub
+	else if(fundex == 3){
+		ret = fpara1 * fpara2;
+		return ret;
+	}//end of mult
+	else if(fundex == 4){
+	//	if(fpara2 == 0){
+	//		//SHOULD TAKE CARE OF DIVIDE BY ZERO. NOT NECESSARILY HERE
+	//	}
+		printf("LINE: %d\n", __LINE__);
+		ret = fpara1 / fpara2;
+		printf("LINE: %d\n", __LINE__);
+		return ret;
+	}//end of div
+	else if(fundex == 5){
+	//	getFactors();
+	}//end of factor
+	else if(fundex == 6){
+		ret = pow(fpara1,fpara2);
+		return ret;
+	}//end of exp
+	else if(fundex == 7){
 
-	return ret;
+	}//end of fib
+
+
+	return -1;// temp
 }//end of domath
 
 void freePtr(char** ptr){
@@ -151,33 +180,71 @@ static int test_getattr(const char *path, struct stat *stbuf)
 	printf("getAttr Here\n");
 	int i =0;	
         int res = 0;
-        memset(stbuf, 0, sizeof(struct stat));
 	char** ptr = parse(path);
-	if(getFunction(ptr)!=-1){
-		freePtr(ptr);
-		stbuf->st_mode = S_IFREG | 0444;
-		stbuf->st_nlink = 1;
-		stbuf->st_size = 10000; // we'll dynamically change this later
-		return res;	
-	}
-	freePtr(ptr);
+	int choice = getFunction(ptr);
+	double ans;
+	int length;
+	char* myBuffer;// = malloc(sizeof(char)*100);
+        memset(stbuf, 0, sizeof(struct stat));
 	for(i=0;i<8;i++){
-		printf("functions: %s\n",functions[i]);
 		//path = mountpoint "/"	
-		if (strcmp(path, functions[i]) == 0) 
-		{ 	
-			printf("Make Directory Here\n");
+		if (strcmp(path, functions[i]) == 0/* || strcmp(path, "/add/3")==0*/) 
+		{ 		
+			printf("functions: %s\n",functions[i]);
 			stbuf->st_mode = S_IFDIR | 0755; //0755 = Admin can do all. Rest can read+exec
 			stbuf->st_nlink = 3;
 			return res;
         	} 
-		else if(strcmp(path, docNames[i])==0){
+		else if(strcmp(path, docNames[i])==0/* || strcmp(path,"/add/3")*/){
 			//0444 = Read only
 			//Call math functions through here. Example: /add/3/3
-			printf("Making a file, not directory.\n");
+			printf("functions: %s\n",functions[i]);
 			stbuf->st_mode = S_IFREG | 0444;
 			stbuf->st_nlink = 1;
 			stbuf->st_size = strlen(documents[i]);
+			return res;	
+		}
+	}
+	printf("THE CHOICE_getattr: %d\n",choice);	
+	printf("THE ptr_getattr: %s\n",ptr[0]);	
+	if(choice!=-1){
+		
+		if((((choice>=1 && choice<=4) || choice==6) && isNumber(ptr[1])!=0 && ptr[2]==NULL) || 
+					((choice ==7 || choice == 5) && ptr[1]==NULL && ptr[2]==NULL))
+		{
+			stbuf->st_mode = S_IFDIR | 0755; //0755 = Admin can do all. Rest can read+exec
+			stbuf->st_nlink = 3;
+			return res;
+        	}
+		else if((((choice>=1 && choice<=4) || choice==6) && isNumber(ptr[1])!=0 && isNumber(ptr[2])!=0) || 
+				((choice ==7 || choice == 5) && isNumber(ptr[1])!=0 && ptr[2]==NULL)){
+			 
+			printf("WE GOT MATH\n");
+			stbuf->st_mode = S_IFREG | 0444;
+			stbuf->st_nlink = 1;
+			if(choice == 4 && strcmp(ptr[2],"0")==0){
+				myBuffer = malloc(sizeof(char)*100);
+				myBuffer = strcpy(myBuffer, "Divide by zero error");
+				length = strlen(myBuffer);
+				printf("LENGTH: %d\n",length);
+				stbuf->st_size = length+1; // we'll dynamically change this later
+			}
+			else if(choice == 6 && doMath(6,ptr[1],ptr[2])==HUGE_VAL){
+				myBuffer = malloc(sizeof(char)*100);
+				myBuffer = strcpy(myBuffer, "Exponential overflow");
+				length = strlen(myBuffer);
+				printf("LENGTH: %d\n",length);
+				stbuf->st_size = length+1; // we'll dynamically change this later	
+			}
+			else{
+				myBuffer = malloc(sizeof(char)*100);
+				ans = doMath(choice,ptr[1],ptr[2]);
+				length = sprintf(myBuffer,"%f",ans);
+				stbuf->st_size = length+1; // we'll dynamically change this later
+			}
+			//myBuffer[length]='\n';
+			//myBuffer[length+1]='\0';
+			free(myBuffer);
 			return res;	
 		}
 	}
@@ -212,7 +279,17 @@ static int test_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		for(i=1;i<8;i++){
         		filler(buf, functions[i] + 1, NULL, 0);
 		}
+		return 0;
 	}
+	char** ptr = parse(path);
+	int choice = getFunction(ptr);
+	if((((choice>=1 && choice<=4) || choice==6) && isNumber(ptr[1])!=0 && ptr[2]==NULL) || 
+				((choice ==7 || choice == 5) && ptr[1]==NULL && ptr[2]==NULL)){
+		filler(buf, ".", NULL, 0);
+		filler(buf, "..", NULL, 0);
+		return 0;
+	}
+	//should recursively assign filler "." and ".." in every possible directory
         else{
                 return -ENOENT;
 	}
@@ -223,19 +300,27 @@ static int test_open(const char *path, struct fuse_file_info *fi)
 	printf("test_Open\n");
 	int i=0;
 	int found = 0;
-	char** ptr = parse(path);
 	for(i=1;i<8;i++){ //meant for docs
 		if (strcmp(path,docNames[i])==0){
                 	found = 1;
 			break;
 		}
 	}
-	if(found ==0 || getFunction(ptr)!=-1){
-		freePtr(ptr);
+	if(found == 1){
+		return 0;
+	}
+	char** ptr = parse(path);
+	int choice = getFunction(ptr);
+	if((((choice>=1 && choice<=4) || choice==6) && isNumber(ptr[1])!=0 && isNumber(ptr[2])!=0) || 
+				((choice ==7 || choice == 5) && isNumber(ptr[1])!=0 && ptr[2]==NULL)){
+		return 0;
+	}
+	if(getFunction(ptr)==-1){
 		return -ENOENT;
 	}
-        if ((fi->flags & 3) != O_RDONLY)
+        if ((fi->flags & 3) != O_RDONLY){
                 return -EACCES;
+	}
         return 0;
 }
 static int test_read(const char *path, char *buf, size_t size, off_t offset,
@@ -252,18 +337,55 @@ static int test_read(const char *path, char *buf, size_t size, off_t offset,
 			break;
 		}
 	}
-	if(found ==0){
+	if(found==1){
+		len = strlen(documents[i]);
+		if (offset < len) {
+			if (offset + size > len)
+				size = len - offset;
+			memcpy(buf, documents[i] + offset, size); //storing the string into buf.
+		} else
+			size = 0;
+		return size;
+	}
+	double ans;
+	char* myBuffer;// = malloc(sizeof(char)*100); //answer is allowed only to be 100 characters
+	char** ptr = parse(path);
+	int choice = getFunction(ptr);
+	printf("CHOICE_read: %d\n",choice);
+		printf("LINE: %d\n", __LINE__);
+	printf("ptr_read: %s\n",ptr[0]);
+		printf("LINE: %d\n", __LINE__);
+	if(choice == -1){
 		return -ENOENT;
 	}
-	
-        len = strlen(documents[i]);
-        if (offset < len) {
-                if (offset + size > len)
-                        size = len - offset;
-                memcpy(buf, documents[i] + offset, size); //storing the string into buf.
-        } else
-                size = 0;
-        return size;
+	else{
+		myBuffer = malloc(sizeof(char)*100);
+		if(choice == 4 && strcmp(ptr[2],"0")==0){
+			myBuffer = strcpy(myBuffer,"Divide by zero error");
+			len = strlen(myBuffer);
+			myBuffer[len] = '\n';
+			myBuffer[len+1] = '\0';
+			len = len+1;
+		}
+		else{
+			ans = doMath(choice,ptr[1],ptr[2]);
+			len = sprintf(myBuffer,"%f",ans);
+			myBuffer[len]='\n';
+			myBuffer[len+1]='\0';
+			len = len+1;
+		}
+		printf("ANSWER_read: %f\n",ans);
+		//char* c = "62\n"; //test run
+		if(offset < len){
+			if(offset + size > len)
+				size = len - offset;
+			printf("LINE: %d\n", __LINE__);
+			memcpy(buf, myBuffer+offset, size);
+		} else
+			size = 0;
+		printf("LINE: %d\n", __LINE__);
+        	return size;
+	}
 }
 static struct fuse_operations test_oper = {
         .getattr        = test_getattr,

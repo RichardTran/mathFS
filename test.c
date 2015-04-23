@@ -75,6 +75,18 @@ char ** parse(const char * pth){
 
 }//end of parse
 
+int isDouble(char * numberString){
+	// return 0 if fail, 1 if success
+	double num = atof(numberString);	
+	int num_int = (int)num;
+	double num_int_double = (double)num_int;
+	if(num == num_int_double)
+		return 0;
+	else
+		return 1;
+
+}//end of isDouble
+
 //check if valid inputs
 int isNumber(char* numberString){
 	if(numberString==NULL){
@@ -123,7 +135,7 @@ int * getFactors(int n){
 	}
 
 	int i;
-	for(i = 3; i < sqrt(n); i = i+2){
+	for(i = 3; i <= sqrt(n); i = i+2){
 		while(n % i == 0){
 			counter++;
 			factors = realloc(factors,sizeof(int)*counter);
@@ -140,6 +152,8 @@ int * getFactors(int n){
 		factors[counter-3] = n;
 	}//end of if 
 
+	factors = realloc(factors,sizeof(int)*counter+1);
+	factors[counter-2] = -1;
 	return factors;
 }//end of getFactors 
 
@@ -166,7 +180,9 @@ char * doMoreMath(int fundex, char * para){
 		ret = factors;
 		int i;
 		char * str_temp = (char *)malloc(sizeof(char)*1000);
-		for(i = 0; i < sizeof(factors)/sizeof(factors[0])+1; i++){
+		printf("sizeof is %d\n",(int)(sizeof(factors)/sizeof(factors[0])+1));
+		for(i = 0; factors[i] != -1; i++){
+		
 			printf("ret[%d] is %d\n",i,ret[i]);
 			if(str_ret==NULL){
 				str_ret = malloc(sizeof(char)*1000);
@@ -320,6 +336,14 @@ static int test_getattr(const char *path, struct stat *stbuf)
 				printf("LENGTH: %d\n",length);
 				stbuf->st_size = length+1; // we'll dynamically change this later	
 			}
+			else if((choice == 5 || choice == 7)  && isDouble(ptr[1])){
+				myBuffer = malloc(sizeof(char)*100);
+				myBuffer = strcpy(myBuffer, "number to factor must be integer");
+				length = strlen(myBuffer);
+				stbuf->st_size = length+1;
+
+			}
+
 			else if((choice == 5 || choice == 7) && isNumber(ptr[1])!=0 && ptr[2]==NULL){
 				myBuffer = malloc(sizeof(char)*1000);
 				printf("LINE: %d\n", __LINE__);
@@ -459,6 +483,15 @@ static int test_read(const char *path, char *buf, size_t size, off_t offset,
 			myBuffer[len] = '\n';
 			myBuffer[len+1] = '\0';
 			len = len+1;
+		}
+		else if((choice == 5 || choice == 7)  && isDouble(ptr[1])){
+			myBuffer = malloc(sizeof(char)*100);
+			myBuffer = strcpy(myBuffer, "number to factor must be integer");
+			len = strlen(myBuffer);
+			myBuffer[len] = '\n';
+			myBuffer[len+1] = '\0';
+			len = len+1;
+
 		}
 		else if((choice == 5 || choice == 7) && isNumber(ptr[1]) && ptr[2] == NULL){
 			myBuffer = malloc(sizeof(char)*1000);

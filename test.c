@@ -158,7 +158,7 @@ char * doMoreMath(int fundex, char * para){
 	int fpara = atoi(a);
 	int * ret = NULL;
 
-	char * str_ret = (char *)malloc(sizeof(char)*1000);
+	char * str_ret = NULL;
 
 	if(fundex == 5){
 		printf("we're computing the prime factors for %d\n", fpara);
@@ -167,13 +167,16 @@ char * doMoreMath(int fundex, char * para){
 		int i;
 		char * str_temp = (char *)malloc(sizeof(char)*1000);
 		for(i = 0; i < sizeof(factors)/sizeof(factors[0])+1; i++){
-//		for(i = 0 ; i < 3; i++){
-		    //str_temp = (char *)malloc(sizeof(char)*1000);
 			printf("ret[%d] is %d\n",i,ret[i]);
-			sprintf(str_temp, "%d", ret[i]);
-			str_ret = strcat(str_ret, str_temp);
-			str_ret = strcat(str_ret, "\n");
-			
+			if(str_ret==NULL){
+				str_ret = malloc(sizeof(char)*1000);
+				sprintf(str_ret,"%d",ret[i]);
+			}
+			else{
+				sprintf(str_temp, "%d", ret[i]);
+				str_ret = strcat(str_ret, str_temp);
+			}
+			str_ret = strcat(str_ret, "\n");	
 		}//end of for
 		str_ret = strcat(str_ret, "\0");
 	}//end of prime factors 
@@ -185,16 +188,22 @@ char * doMoreMath(int fundex, char * para){
 			fibs[i] = getFib(i);	
 		}//end of for 
 		ret = fibs;
-		char * str_temp = (char *)malloc(sizeof(char)*1000);
+		char * str_temp = malloc(sizeof(char)*1000);
 		for(i = 0; i < fpara; i++){
-			printf("ret[%d] is %d\n",i,ret[i]);
-			sprintf(str_temp,"%d",ret[i]);
-			str_ret = strcat(str_ret,str_temp);
+			if(str_ret==NULL){
+				str_ret = malloc(sizeof(char)*1000);
+				sprintf(str_ret,"%d",ret[i]);
+			}
+			else{
+				//str_temp = (char *)malloc(sizeof(char)*1000);
+				printf("ret[%d] is %d\n",i,ret[i]);
+				sprintf(str_temp,"%d",ret[i]);
+				str_ret = strcat(str_ret,str_temp);
+			}
 			str_ret = strcat(str_ret, "\n");
 		}//end of for 
 		str_ret = strcat(str_ret, "\0");
 	}//end of fibonacci
-	//return ret;
 	return str_ret;
 }//end of domoremath
 

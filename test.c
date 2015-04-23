@@ -21,7 +21,7 @@ static const char* functions[]={
 	"/fib",  	//7
 };
 static const char* docNames[]={
-	"",    		//0
+	"",   	 		//0
 	"/add/doc", 	//1
 	"/sub/doc", 	//2
 	"/mult/doc",	//3
@@ -31,11 +31,11 @@ static const char* docNames[]={
 	"/fib/doc",  	//7
 };
 static const char* documents[]={
-	"", 						//0 empty since we won't be making a doc for root.
-	"Adds two numbers.\n", 				//1
-	"Subtracts two numbers.\n", 			//2
-	"Multiplies two numbers.\n",			//3
-	"Divides two numbers.\n",			//4
+	"", 										//0 empty since we won't be making a doc for root.
+	"Adds two numbers.\n", 						//1
+	"Subtracts two numbers.\n", 				//2
+	"Multiplies two numbers.\n",				//3
+	"Divides two numbers.\n",					//4
 	"Computes the prime factors of a number\n",	//5
 	"Raises a number to a given exponent\n",	//6
 	"Computes the first n fibonacci numbers\n"	//7
@@ -45,8 +45,7 @@ static const char* documents[]={
 char ** parse(const char * pth){
 	char * path = malloc(sizeof(char)*strlen(pth)+1);
 	path = strcpy(path,pth); //have to copy as path name is given as const
-	char ** ptr = malloc(sizeof(char*)*3); //THIS WAS THE PROBLEM. YOU WERE RIGHT. 
-	//MY BAD. WE HAD TO MALLOC
+	char ** ptr = malloc(sizeof(char*)*3);
 	char c;
 	int counter = 1;
 	int i;
@@ -62,11 +61,10 @@ char ** parse(const char * pth){
 	for(i = 1; i < length; i ++){
 		c = *(path+i);
 		if(c=='/'){
-			//path[i] = '\0';
 			*(path+i) = '\0';
 			ptr[counter] = (char *)(path+i+1);
 			counter++;
-		}//end of if it's a / 
+		}
 		else{
 			continue;
 		}
@@ -76,7 +74,6 @@ char ** parse(const char * pth){
 }//end of parse
 
 int isDouble(char * numberString){
-	// return 0 if fail, 1 if success
 	double num = atof(numberString);	
 	int num_int = (int)num;
 	double num_int_double = (double)num_int;
@@ -87,7 +84,7 @@ int isDouble(char * numberString){
 
 }//end of isDouble
 
-//check if valid inputs
+//check if valid inputs for math functions
 int isNumber(char* numberString){
 	if(numberString==NULL){
 		return 0;
@@ -121,7 +118,7 @@ int getFunction(char** ptr){
 			}
 		}
 	}
-	return -1; //error
+	return -1; //Returns -1 if a valid function not found
 }//end of getFunction
 int * getFactors(int n){
 	int counter = 2;
@@ -166,6 +163,10 @@ int getFib(int n){
 		return (getFib(n-1) + getFib(n-2));
 }//end of getFib
 
+// Used for fib/factor since it's different from add,sub etc.
+// due to it requiring only one parameter
+// @fundex == choice of math function based our functions[] table
+// @para is the string of a number being passed in
 char * doMoreMath(int fundex, char * para){
 	char* a = malloc(strlen(para)+1);
 	a = strcpy(a,para);
@@ -223,6 +224,10 @@ char * doMoreMath(int fundex, char * para){
 	return str_ret;
 }//end of domoremath
 
+//Does basic math operations
+//@fundex = int choice from functions[] table
+//@para1 = parameter1
+//@para2 = parameter2
 double doMath(int fundex, char * para1, char*  para2){
 	char* a = malloc(strlen(para1)+1);
 	char* b = malloc(strlen(para2)+1);
@@ -248,9 +253,6 @@ double doMath(int fundex, char * para1, char*  para2){
 		return ret;
 	}//end of mult
 	else if(fundex == 4){
-		//	if(fpara2 == 0){
-		//		//SHOULD TAKE CARE OF DIVIDE BY ZERO. NOT NECESSARILY HERE
-		//	}
 		printf("LINE: %d\n", __LINE__);
 		ret = fpara1 / fpara2;
 		printf("LINE: %d\n", __LINE__);
@@ -278,6 +280,8 @@ void freePtr(char** ptr){
 	}	
 }
 
+// Sets the size of our files in preparation for test_read
+// filters directories and files 
 static int test_getattr(const char *path, struct stat *stbuf)
 {
 	int i =0;	
@@ -286,17 +290,17 @@ static int test_getattr(const char *path, struct stat *stbuf)
 	int choice = getFunction(ptr);
 	double ans;
 	int length;
-	char* myBuffer;// = malloc(sizeof(char)*100);
+	char* myBuffer;
 	memset(stbuf, 0, sizeof(struct stat));
 	for(i=0;i<8;i++){
 		//path = mountpoint "/"	
-		if (strcmp(path, functions[i]) == 0/* || strcmp(path, "/add/3")==0*/) 
+		if (strcmp(path, functions[i]) == 0) 
 		{ 		
 			stbuf->st_mode = S_IFDIR | 0755; //0755 = Admin can do all. Rest can read+exec
 			stbuf->st_nlink = 3;
 			return res;
 		} 
-		else if(strcmp(path, docNames[i])==0/* || strcmp(path,"/add/3")*/){
+		else if(strcmp(path, docNames[i])==0){
 			//0444 = Read only
 			//Call math functions through here. Example: /add/3/3
 			stbuf->st_mode = S_IFREG | 0444;
@@ -327,14 +331,14 @@ static int test_getattr(const char *path, struct stat *stbuf)
 				myBuffer = strcpy(myBuffer, "Divide by zero error");
 				length = strlen(myBuffer);
 				printf("LENGTH: %d\n",length);
-				stbuf->st_size = length+1; // we'll dynamically change this later
+				stbuf->st_size = length+1; 
 			}
 			else if(choice == 6 && doMath(6,ptr[1],ptr[2])==HUGE_VAL){
 				myBuffer = malloc(sizeof(char)*100);
 				myBuffer = strcpy(myBuffer, "Exponential overflow");
 				length = strlen(myBuffer);
 				printf("LENGTH: %d\n",length);
-				stbuf->st_size = length+1; // we'll dynamically change this later	
+				stbuf->st_size = length+1;	
 			}
 			else if((choice == 5 || choice == 7)  && isDouble(ptr[1])){
 				myBuffer = malloc(sizeof(char)*100);
@@ -350,17 +354,14 @@ static int test_getattr(const char *path, struct stat *stbuf)
 				char * ff_ans = doMoreMath(choice, ptr[1]);	
 				myBuffer = strcpy(myBuffer, ff_ans);
 				length = strlen(myBuffer);
-				//length = sprintf(myBuffer, "%s", ff_ans);
 				stbuf->st_size = length;
-
-				//ALEXXXX ZHAAAAAAAAANG
 				
 			}
 			else{
 				myBuffer = malloc(sizeof(char)*100);
 				ans = doMath(choice,ptr[1],ptr[2]);
 				length = sprintf(myBuffer,"%f",ans);
-				stbuf->st_size = length+1; // we'll dynamically change this later
+				stbuf->st_size = length+1; 
 			}
 			free(myBuffer);
 			return res;	
@@ -499,12 +500,9 @@ static int test_read(const char *path, char *buf, size_t size, off_t offset,
 			printf("ff_ans is %s\n",ff_ans);
 			myBuffer = strcpy(myBuffer,ff_ans);
 			len = strlen(myBuffer);
-			//len = sprintf(myBuffer, "%s", ff_ans);
 			myBuffer[len] = '\0';
 			printf("mybuffer is %s\n",myBuffer);
 			len = len + 1;
-
-			//ALEXXXX ZHAAAAAAAAANG
 			
 		}
 		else{
